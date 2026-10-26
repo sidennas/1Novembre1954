@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة 1 نوفمبر التاريخية - ثورة الأحرار</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Reem Kufi', sans-serif;
+            background: linear-gradient(135deg, #006233 0%, #111827 50%, #D21034 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Global Watermark Styling */
+        .global-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            z-index: 1;
+            letter-spacing: 0.1em;
+        }
+
+        .amiri {
+            font-family: 'Amiri', serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Wheel Styles */
+        #wheelCanvas {
+            transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1);
+        }
+
+        /* Certificate Print styling */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .global-watermark {
+                display: none !important;
+            }
+            #printableCertificate, #printableCertificate * {
+                visibility: visible;
+            }
+            #printableCertificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col justify-between min-h-screen">
+
+    <!-- Global Watermark -->
+    <div class="global-watermark">SM/1628</div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-emerald-900/80 backdrop-blur-md border-b border-emerald-700/50 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <i class="fa-solid font-bold fa-star-and-crescent text-red-500 text-3xl animate-pulse"></i>
+                <div>
+                    <h1 class="font-bold text-xl md:text-2xl tracking-wide">مسابقة أول نوفمبر الكبرى</h1>
+                    <p class="text-xs text-emerald-300">مكتبة الجيل الصاعد - الذكرى المجيدة <span class="opacity-70 text-[10px] bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-700/50 mr-1">SM/1628</span></p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <button id="soundToggleBtn" onclick="toggleSound()" class="bg-emerald-800 hover:bg-emerald-700 p-2.5 rounded-full transition border border-emerald-600">
+                    <i id="soundIcon" class="fas fa-volume-up text-lg"></i>
+                </button>
+                <div id="userInfoDisplay" class="hidden text-sm font-semibold bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-700/50">
+                    <span id="displayUserName" class="text-emerald-200"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto p-4 w-full flex-grow flex flex-col justify-center relative z-10">
+
+        <!-- STEP 1: WELCOME & USER INFO -->
+        <div id="stepWelcome" class="glass-card rounded-3xl p-6 md:p-10 text-center my-6">
+            <div class="w-24 h-24 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 text-4xl shadow-inner border-2 border-emerald-500">
+                <i class="fa-solid fa-monument"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">مرحباً بكم في مسابقة ثورة الأحرار</h2>
+            <p class="text-gray-600 mb-6 max-w-lg mx-auto">اختبر معلوماتك التاريخية، واكتشف ألغاز الثورة التحريرية الجزائرية المجيدة واحصل على شهادتك الإلكترونية!</p>
+            
+            <form onsubmit="startApp(event)" class="max-w-md mx-auto space-y-4">
+                <div>
+                    <label class="block text-right text-sm font-bold text-gray-700 mb-1">اسم المشارك / المشاركة:</label>
+                    <input type="text" id="inputUserName" required placeholder="أدخل اسمك الكامل هنا..." 
+                        class="w-full px-4 py-3 rounded-xl border-2 border-emerald-300 focus:border-emerald-600 focus:outline-none transition text-center font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-right text-sm font-bold text-gray-700 mb-1">المؤسسة / المكتبة:</label>
+                    <input type="text" id="inputUserOrg" placeholder="مكتبة المطالعة العمومية (اختياري)..." value="المكتبة الرئيسية للمطالعة العمومية"
+                        class="w-full px-4 py-3 rounded-xl border-2 border-emerald-300 focus:border-emerald-600 focus:outline-none transition text-center text-gray-700">
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:-translate-y-0.5 text-lg">
+                    انطلق إلى بوابة الأبواب <i class="fas fa-arrow-left mr-2"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- STEP 2: CATEGORY SELECTION -->
+        <div id="stepCategories" class="hidden my-6 space-y-6">
+            <div class="text-center text-white mb-8">
+                <h2 class="text-3xl font-bold mb-2">اختر الباب المناسب لفئتك العمرية</h2>
+                <p class="text-emerald-100">تضم المسابقة أسئلة تاريخية وألغازاً مشفرة تناسب جميع الفئات</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Level 1 -->
+                <div onclick="selectCategory('easy')" class="glass-card rounded-2xl p-6 cursor-pointer transform hover:-translate-y-2 transition duration-300 border-t-8 border-emerald-500 hover:shadow-emerald-500/20 hover:shadow-2xl text-center flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+                            📗
+                        </div>
+                        <h3 class="text-2xl font-bold text-emerald-900 mb-2">براعم نوفمبر</h3>
+                        <p class="text-xs font-semibold text-emerald-700 bg-emerald-100 inline-block px-3 py-1 rounded-full mb-3">للأطفال (6 - 10 سنوات)</p>
+                        <p class="text-gray-600 text-sm mb-4">أسئلة مبسطة، رسومات وألوان مبهجة لترسيخ الهوية الوطنية لدى البراعم.</p>
+                    </div>
+                    <div class="bg-emerald-600 text-white py-2 rounded-xl font-bold text-sm">دخول الباب</div>
+                </div>
+
+                <!-- Level 2 -->
+                <div onclick="selectCategory('medium')" class="glass-card rounded-2xl p-6 cursor-pointer transform hover:-translate-y-2 transition duration-300 border-t-8 border-blue-600 hover:shadow-blue-500/20 hover:shadow-2xl text-center flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+                            📘
+                        </div>
+                        <h3 class="text-2xl font-bold text-blue-900 mb-2">أشبال الثورة</h3>
+                        <p class="text-xs font-semibold text-blue-700 bg-blue-100 inline-block px-3 py-1 rounded-full mb-3">للفتيان (11 - 15 سنة)</p>
+                        <p class="text-gray-600 text-sm mb-4">أسئلة متوسطة، معرفة شخصيات ومحطات تاريخية وألغاز شيقة.</p>
+                    </div>
+                    <div class="bg-blue-600 text-white py-2 rounded-xl font-bold text-sm">دخول الباب</div>
+                </div>
+
+                <!-- Level 3 -->
+                <div onclick="selectCategory('hard')" class="glass-card rounded-2xl p-6 cursor-pointer transform hover:-translate-y-2 transition duration-300 border-t-8 border-red-600 hover:shadow-red-500/20 hover:shadow-2xl text-center flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
+                            📕
+                        </div>
+                        <h3 class="text-2xl font-bold text-red-900 mb-2">حراس الذاكرة</h3>
+                        <p class="text-xs font-semibold text-red-700 bg-red-100 inline-block px-3 py-1 rounded-full mb-3">للشباب والكبار (+16 سنة)</p>
+                        <p class="text-gray-600 text-sm mb-4">تحديات متقدمة، مؤقت زمني، وألغاز وثائقية ومشفرة عميقة.</p>
+                    </div>
+                    <div class="bg-red-600 text-white py-2 rounded-xl font-bold text-sm">دخول الباب</div>
+                </div>
+            </div>
+
+            <!-- Extra Feature: Wheel of Fortune Button -->
+            <div class="mt-8 text-center">
+                <button onclick="showWheelModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-full shadow-lg border-2 border-amber-300 transition transform hover:scale-105">
+                    <i class="fas fa-dharmachakra animate-spin-slow mr-2"></i> عجلة الحظ التاريخية (نقاط إضافية)
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: QUIZ CONTAINER -->
+        <div id="stepQuiz" class="hidden glass-card rounded-3xl p-6 md:p-8 my-4 relative">
+            <!-- Header Status -->
+            <div class="flex justify-between items-center pb-4 mb-6 border-b border-gray-200">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <span id="badgeCategory" class="px-3 py-1 rounded-full text-xs font-bold text-white bg-emerald-600"></span>
+                    <span id="questionCounter" class="text-sm font-bold text-gray-500">السؤال 1 من 10</span>
+                </div>
+                <!-- Timer -->
+                <div id="timerBox" class="flex items-center space-x-2 space-x-reverse bg-red-100 text-red-700 px-3 py-1.5 rounded-xl font-bold text-sm">
+                    <i class="fas fa-clock"></i>
+                    <span id="timerSeconds">30</span> ثانية
+                </div>
+                <!-- Score -->
+                <div class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl font-bold text-sm">
+                    النقاط: <span id="currentScore">0</span>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div id="questionContainer" class="space-y-6">
+                <!-- Hint or Visual Badge -->
+                <div id="questionTypeBadge" class="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-md font-semibold">
+                    سؤال تاريخي
+                </div>
+
+                <h3 id="questionText" class="text-xl md:text-2xl font-bold text-gray-800 leading-relaxed">
+                    جاري تحميل السؤال...
+                </h3>
+
+                <!-- Options -->
+                <div id="optionsContainer" class="grid grid-cols-1 gap-3 pt-2">
+                    <!-- Dynamic Options -->
+                </div>
+            </div>
+
+            <!-- Next Button Container -->
+            <div class="mt-6 text-left border-t border-gray-100 pt-4 flex justify-between items-center">
+                <p id="feedbackText" class="font-bold text-sm"></p>
+                <button id="btnNext" onclick="nextQuestion()" disabled class="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold transition">
+                    السؤال التالي <i class="fas fa-chevron-left mr-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 4: RESULTS & CERTIFICATE -->
+        <div id="stepResult" class="hidden glass-card rounded-3xl p-6 md:p-10 text-center my-6">
+            <div id="resultIcon" class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center text-4xl shadow-md">
+                🏆
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-2">أكتمل التحدي بنجاح!</h2>
+            <p class="text-gray-600 mb-6">شكراً لمشاركتك في تخليد ذكرى ثورة نوفمبر المجيدة</p>
+
+            <div class="bg-emerald-50 rounded-2xl p-4 max-w-sm mx-auto border border-emerald-200 mb-6">
+                <div class="text-sm text-emerald-800 font-bold mb-1">النتيجة النهائية</div>
+                <div class="text-4xl font-black text-emerald-700 mb-1"><span id="finalScore">0</span> / 100</div>
+                <div id="resultEvaluation" class="text-xs font-semibold text-emerald-600">بطل الذاكرة الوطنية</div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 no-print">
+                <button onclick="generateCertificate()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center">
+                    <i class="fas fa-certificate text-amber-300 text-xl ml-2"></i> عرض شهادة التكريم
+                </button>
+                <button onclick="resetQuiz()" class="bg-gray-700 hover:bg-gray-800 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition">
+                    <i class="fas fa-redo ml-2"></i> إعادة المحاولة
+                </button>
+            </div>
+
+            <!-- Printable Certificate Area -->
+            <div id="certificateContainer" class="hidden mt-8 text-right">
+                <div id="printableCertificate" class="border-8 border-double border-emerald-800 p-8 rounded-2xl bg-amber-50/40 relative overflow-hidden shadow-2xl max-w-2xl mx-auto">
+                    <!-- Background Watermark Inside Certificate -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                        <span class="text-[80px] md:text-[100px] font-black text-emerald-900/5 rotate-[-25deg]">SM/1628</span>
+                    </div>
+
+                    <div class="text-center space-y-4 relative z-10">
+                        <div class="flex justify-between items-center border-b-2 border-emerald-800/30 pb-4">
+                            <div class="text-right">
+                                <h4 id="certOrg" class="font-bold text-emerald-900 text-sm">المكتبة الرئيسية للمطالعة العمومية</h4>
+                                <p class="text-xs text-gray-500">لجنة التنشيط الثقافي والذاكرة التاريخية</p>
+                            </div>
+                            <i class="fa-solid fa-star-and-crescent text-red-600 text-3xl"></i>
+                            <div class="text-left">
+                                <span class="text-xs font-bold text-gray-500">الرقم: 1954/2026</span>
+                            </div>
+                        </div>
+
+                        <h2 class="amiri text-3xl font-bold text-emerald-900 pt-2">شهادة تقدير وتفوق</h2>
+                        <p class="text-sm text-gray-600">تمنح هذه الشهادة الفخرية إلى البطل/ة:</p>
+
+                        <h3 id="certName" class="text-2xl font-black text-red-700 border-b-2 border-amber-400 inline-block px-8 py-1">اسم المشارك</h3>
+
+                        <p class="text-sm text-gray-700 leading-relaxed max-w-lg mx-auto">
+                            تقديراً لمشاركته المتميزة وتحقيقه درجة <span id="certScore" class="font-bold text-emerald-800"></span> في المسابقة التاريخية الإلكترونية المقامة بمناسبة الذكرى المجيدة لاندلاع ثورة 01 نوفمبر 1954.
+                        </p>
+
+                        <div class="pt-6 flex justify-between items-end text-xs font-bold text-emerald-900">
+                            <div class="text-center">
+                                <p>ختم المؤسسة</p>
+                                <div class="w-16 h-16 border-2 border-dashed border-emerald-600 rounded-full mx-auto mt-2 flex items-center justify-center text-emerald-400 text-xs">
+                                    مكتبة الجيل
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-gray-500 mb-1">المشرف العام</p>
+                                <p class="amiri text-base font-bold text-gray-800">حارس الذاكرة الوطنية</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer Watermark Line inside Certificate -->
+                        <div class="pt-4 border-t border-emerald-800/20 text-center">
+                            <span class="text-[11px] font-bold text-emerald-900/60 tracking-wider">الرمز المرجعي للوثيقة: SM/1628</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 no-print">
+                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-xl text-sm transition">
+                        <i class="fas fa-print ml-2"></i> طباعة الشهادة / حفظ PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Wheel of Fortune -->
+    <div id="wheelModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl p-6 text-center max-w-md w-full relative">
+            <button onclick="closeWheelModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <h3 class="text-xl font-bold text-emerald-900 mb-2">عجلة الحظ التاريخية</h3>
+            <p class="text-xs text-gray-600 mb-4">ادور العجلة للحصول على نقطة إضافية أو مكافأة خاصة!</p>
+            
+            <div class="relative w-64 h-64 mx-auto mb-4">
+                <!-- Wheel Arrow -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-red-600 text-3xl z-20">
+                    <i class="fas fa-caret-down"></i>
+                </div>
+                <canvas id="wheelCanvas" width="256" height="256" class="rounded-full shadow-lg border-4 border-amber-400"></canvas>
+            </div>
+
+            <button id="spinBtn" onclick="spinWheel()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition">
+                تدوير العجلة!
+            </button>
+            <p id="wheelResult" class="text-sm font-bold text-emerald-800 mt-3 h-6"></p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-emerald-950 text-emerald-400 text-center py-3 text-xs border-t border-emerald-800 no-print flex justify-between items-center px-6">
+        <span>المجد والخلود لشهدائنا الأبرار — عاشت الجزائر حرة مستقلة 🇩🇿</span>
+        <span class="bg-emerald-900/80 text-emerald-300 px-2.5 py-1 rounded font-mono font-bold border border-emerald-700/50">SM/1628</span>
+    </footer>
+
+    <!-- Audio Effects (Web Audio API Synthesizer) -->
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'win') {
+                [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.12);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.12 + 0.3);
+                    o.start(audioCtx.currentTime + i * 0.12);
+                    o.stop(audioCtx.currentTime + i * 0.12 + 0.3);
+                });
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            icon.className = soundEnabled ? 'fas fa-volume-up text-lg' : 'fas fa-volume-mute text-lg text-red-400';
+        }
+
+        /* DATA BANK */
+        const quizDatabase = {
+            easy: [
+                { q: "ما هو تاريخ اندلاع الثورة التحريرية الجزائرية المجيدة؟", opts: ["1 نوفمبر 1954", "5 جويلية 1962", "8 ماي 1945", "19 مارس 1962"], a: 0, type: "سؤال تاريخي" },
+                { q: "ما هما اللونان المعتمَدان في العلم الوطني الجزائري إلى جانب الهلال والنجمة الحمراوين؟", opts: ["الأخضر والأبيض", "الأحمر والأزرق", "الأصفر والأخضر", "الأبيض والأسود"], a: 0, type: "سؤال مبسط" },
+                { q: "لغز: أنا رمز الحرية والاستقلال، يرفرف في السماء بألوانه الثلاثة والهلال، فمن أكون؟", opts: ["العلم الوطني", "الشعار الرسمي", "النصب التذكاري", "الكتاب التاريخي"], a: 0, type: "لغز البراعم" },
+                { q: "ما اسم النشيد الوطني الجزائري الذي ألفه الشاعر مفدي زكريا؟", opts: ["قسماً", "موطني", "نشيد الأمل", "حماة الديار"], a: 0, type: "سؤال تاريخي" },
+                { q: "كم دامت الثورة التحريرية الجزائرية المظفرة؟", opts: ["7 سنوات ونصف", "3 سنوات", "10 سنوات", "5 سنوات"], a: 0, type: "سؤال تاريخي" },
+                { q: "لغز: رجل شجاع ضحى بنفسه من أجل أن يعيش الوطن حراً، يسمى...؟", opts: ["الشهيد", "المسافر", "الباحث", "الكاتب"], a: 0, type: "لغز البراعم" },
+                { q: "في أي شهر نحتفل بذكرى اندلاع الثورة الجزائرية؟", opts: ["نوفمبر", "جويلية", "مارس", "ماي"], a: 0, type: "سؤال مبسط" },
+                { q: "ما هي عاصمة الجزائر التي شهدت معارك تاريخية خلدها التاريخ؟", opts: ["الجزائر العاصمة", "وهران", "قسنطينة", "عنابة"], a: 0, type: "سؤال مبسط" },
+                { q: "لغز: جبال شامخة احتضنت المجاهدين الأبطال وكانت حصناً منيعاً للثورة؟", opts: ["جبال الأوراس وجرجرة", "جبال الألب", "جبال الهيمالايا", "جبال الأطلس الكبير"], a: 0, type: "لغز البراعم" },
+                { q: "ما اسم البيان التأسيسي الصادر في 1 نوفمبر 1954 لتحديد أهداف الثورة؟", opts: ["بيان أول نوفمبر", "بيان الاستقلال", "ميثاق الجزائر", "معاهدة التحرير"], a: 0, type: "سؤال تاريخي" }
+            ],
+            medium: [
+                { q: "من هو الشهيد البطل الملقب بـ 'رمز التضحية' وصاحب المقولة الشهيرة 'ألقوا بالثورة إلى الشارع سيحتضنها الشعب'؟", opts: ["العربي بن مهيدي", "مصطفى بن بولعيد", "زيغود يوسف", "عميروش"], a: 0, type: "شخصيات تاريخية" },
+                { q: "في أي ولاية تاريخية اندلعت الرصاصة الأولى لثورة 1 نوفمبر 1954 (المنطقة الأولى)؟", opts: ["الأوراس", "الشمال القسنطيني", "القبائل", "الجزائر العاصمة"], a: 0, type: "سؤال متوسط" },
+                { q: "لغز الأشبال: مؤتمر تاريخي عُقد عام 1956 لإعادة تنظيم الهيكلة العسكرية والسياسية للثورة، فما اسمه؟", opts: ["مؤتمر الصومام", "مؤتمر طرابلس", "مؤتمر باندونغ", "مؤتمر القاهرة"], a: 0, type: "ألغاز وحقائق" },
+                { q: "من هو القائد الذي رأس اللجنة الثورية للوحدة والعمل وكان من بين القادة السبعة المفجرين للثورة في المنطقة الأولى؟", opts: ["مصطفى بن بولعيد", "ديدوش مراد", "كريم بلقاسم", "محمد بوضياف"], a: 0, type: "شخصيات تاريخية" },
+                { q: "ما التاريخ الذي وقعت فيه هجومات الشمال القسنطيني بقيادة زيغود يوسف؟", opts: ["20 أوت 1955", "1 نوفمبر 1954", "20 أوت 1956", "19 مارس 1962"], a: 0, type: "سؤال متوسط" },
+                { q: "لغز الأشبال: إذاعة سرية كانت تبث صوت الثورة الجزائرية إلى العالم عبر موجات مخفية، فما اسمها؟", opts: ["صوت الجزائر الحرة الثائرة", "إذاعة التحرير", "صوت الأوراس", "الإذاعة الوطنية"], a: 0, type: "ألغاز وحقائق" },
+                { q: "من هي بطلة معركة الجزائر التي كانت تنقل المتفجرات وتم اعتقالها وتعذيبها دون أن تضعف؟", opts: ["جميلة بوحيرد", "فضيلة سعدان", "حسيبة بن بوعلي", "مليكة قايد"], a: 0, type: "شخصيات تاريخية" },
+                { q: "ما هي المدينة الجزائرية التي تُلقب بـ 'مدينة الجسور المعلقة' وشهدت أحداثاً ثورية بارزة؟", opts: ["قسنطينة", "تلمسان", "بجاية", "سطيف"], a: 0, type: "سؤال جغرافي تاريخي" },
+                { q: "لغز: جريدة رسمية أسستها جبهة التحرير الوطني عام 1956 لنشر أخبار الثورة والرد على الاستعمار؟", opts: ["جريدة المجاهد", "جريدة الشعب", "جريدة البصائر", "جريدة أطلس"], a: 0, type: "ألغاز وحقائق" },
+                { q: "ما هو تاريخ وقف إطلاق النار الذي أعلن نهاية الحرب رسمياً؟", opts: ["19 مارس 1962", "5 جويلية 1962", "1 نوفمبر 1961", "20 أوت 1960"], a: 0, type: "سؤال متوسط" }
+            ],
+            hard: [
+                { q: "ما اسم الوثيقة التاريخية الصادرة عام 1956 التي قسمت الجزائر إلى 6 ولائات تاريخية وحددت مهام الجيش والسياسة؟", opts: ["وثيقة مؤتمر الصومام", "بيان طرابلس", "اتفاقيات إيفيان", "مشروع سوستيل"], a: 0, type: "تحدي الذاكرة" },
+                { q: "لغز مشفر [كود: 08-1956]: مكان انعقاد مؤتمر الصومام التاريخي في ولاية بجاية، ما اسم القرية؟", opts: ["إفري أوزلاقن", "عين الحمام", "سيدي عيش", "أقبو"], a: 0, type: "لغز مشفر" },
+                { q: "من هو الدبلوماسي الجزائري البارز الذي ترأس الوفد الجزائري في مفاوضات إيفيان؟", opts: ["كريم بلقاسم", "أحمد بن بلة", "محمد خيضر", "حسين أيت أحمد"], a: 0, type: "شخصيات متقدمة" },
+                { q: "ما اسم الخطين الشائكين المكهربين اللذين أقامهما الاستعمار الفرنسي على الحدود الشرقية والغربية لمنع الإمدادات؟", opts: ["خطي شال وموريس", "خط ماجينو", "خط سيغفريد", "خط برليف"], a: 0, type: "تحدي الذاكرة" },
+                { q: "لغز مشفر [رمز: 17-10-1961]: مظاهرات سلمية خاضها المهاجرون الجزائريون في قلب عاصمة أوروبية تعرضوا فيها للمجزرة، أين وقعت؟", opts: ["باريس - فرنسا", "ليون - فرنسا", "بروكسل - بلجيكا", "جنيف - سويسرا"], a: 0, type: "لغز وثائقي" },
+                { q: "من هو القائد العسكري الشاب الذي استشهد في معركة بوكركر عام 1955 وكان قائداً للمنطقة الثانية؟", opts: ["ديدوش مراد", "سويداني بوجمعة", "باجي مختار", "عزوز شيتور"], a: 0, type: "شخصيات متقدمة" },
+                { q: "في أي سنة تم الاعتراف بقضية الجزائر في الجمعية العامة للأمم المتحدة لأول مرة وتدويل القضية؟", opts: ["1955 (مؤتمر باندونغ)", "1954", "1958", "1960"], a: 0, type: "تحدي الذاكرة" },
+                { q: "لغز مشفر: منظمة إرهابية سرية فرنسية حاولت تعطيل الاستقلال في عامي 1961-1962 عبر الاغتيالات والتخريب؟", opts: ["منظمة الجيش السرية (OAS)", "الحركة الاستعمارية", "جبهة الجزائر الفرنسية", "حزب اليد الحمراء"], a: 0, type: "لغز مشفر" },
+                { q: "ما هي المقاومة الشعبية التي قادها الشيخ المقراني والشيخ الحداد عام 1871 ويمتد أثرها لروح 1954؟", opts: ["ثورة 1871 (الشيخ المقراني)", "مقاومة الأمير عبد القادر", "مقاومة الأغواط", "مقاومة الزعاتشة"], a: 0, type: "تحدي الذاكرة" },
+                { q: "ما هو تاريخ إجراء استفتاء تقرير المصير الذي صوت فيه الجزائريون بأغلبية ساحقة للاستقلال؟", opts: ["1 جويلية 1962", "19 مارس 1962", "5 جويلية 1962", "25 جوان 1962"], a: 0, type: "تحدي الذاكرة" }
+            ]
+        };
+
+        // App States
+        let currentUser = { name: "", org: "" };
+        let currentCategory = "easy";
+        let activeQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let timer = null;
+        let timeLeft = 30;
+        let bonusPoints = 0;
+
+        function startApp(e) {
+            e.preventDefault();
+            const name = document.getElementById('inputUserName').value.trim();
+            const org = document.getElementById('inputUserOrg').value.trim() || "المكتبة الرئيسية للمطالعة العمومية";
+            
+            if(!name) return;
+
+            currentUser.name = name;
+            currentUser.org = org;
+
+            document.getElementById('displayUserName').innerText = name;
+            document.getElementById('userInfoDisplay').classList.remove('hidden');
+
+            document.getElementById('stepWelcome').classList.add('hidden');
+            document.getElementById('stepCategories').classList.remove('hidden');
+
+            initWheel();
+        }
+
+        function selectCategory(cat) {
+            currentCategory = cat;
+            activeQuestions = [...quizDatabase[cat]];
+            currentIndex = 0;
+            score = 0;
+
+            const badge = document.getElementById('badgeCategory');
+            if(cat === 'easy') {
+                badge.innerText = "📗 براعم نوفمبر";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold text-white bg-emerald-600";
+            } else if(cat === 'medium') {
+                badge.innerText = "📘 أشبال الثورة";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold text-white bg-blue-600";
+            } else {
+                badge.innerText = "📕 حراس الذاكرة";
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold text-white bg-red-600";
+            }
+
+            document.getElementById('stepCategories').classList.add('hidden');
+            document.getElementById('stepQuiz').classList.remove('hidden');
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            clearInterval(timer);
+            const q = activeQuestions[currentIndex];
+
+            document.getElementById('questionCounter').innerText = `السؤال ${currentIndex + 1} من ${activeQuestions.length}`;
+            document.getElementById('currentScore').innerText = score + bonusPoints;
+            document.getElementById('questionText').innerText = q.q;
+            document.getElementById('questionTypeBadge').innerText = q.type;
+            document.getElementById('feedbackText').innerText = "";
+
+            const btnNext = document.getElementById('btnNext');
+            btnNext.disabled = true;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = "";
+
+            q.opts.forEach((opt, idx) => {
+                const button = document.createElement('button');
+                button.className = "w-full text-right p-4 rounded-xl border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition font-semibold text-gray-700 flex justify-between items-center";
+                button.innerHTML = `<span>${opt}</span> <i class="far fa-circle text-gray-400"></i>`;
+                button.onclick = () => checkAnswer(idx, button);
+                container.appendChild(button);
+            });
+
+            timeLeft = currentCategory === 'hard' ? 20 : 30;
+            document.getElementById('timerSeconds').innerText = timeLeft;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerSeconds').innerText = timeLeft;
+                if(timeLeft <= 0) {
+                    clearInterval(timer);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selectedIdx, btnElement) {
+            clearInterval(timer);
+            const q = activeQuestions[currentIndex];
+            const container = document.getElementById('optionsContainer');
+            const buttons = container.querySelectorAll('button');
+
+            buttons.forEach(b => b.disabled = true);
+
+            if(selectedIdx === q.a) {
+                btnElement.className = "w-full text-right p-4 rounded-xl border-2 border-emerald-600 bg-emerald-100 text-emerald-900 font-bold flex justify-between items-center";
+                btnElement.querySelector('i').className = "fas fa-check-circle text-emerald-600";
+                score += 10;
+                document.getElementById('currentScore').innerText = score + bonusPoints;
+                document.getElementById('feedbackText').innerText = "إجابة صحيحة! أحسنت 👏";
+                document.getElementById('feedbackText').className = "font-bold text-sm text-emerald-600";
+                playSound('correct');
+            } else {
+                btnElement.className = "w-full text-right p-4 rounded-xl border-2 border-red-500 bg-red-100 text-red-900 font-bold flex justify-between items-center";
+                btnElement.querySelector('i').className = "fas fa-times-circle text-red-500";
+                
+                buttons[q.a].className = "w-full text-right p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-900 font-bold flex justify-between items-center";
+                buttons[q.a].querySelector('i').className = "fas fa-check-circle text-emerald-600";
+
+                document.getElementById('feedbackText').innerText = "إجابة خاطئة! ركز في السؤال القادم 🎯";
+                document.getElementById('feedbackText').className = "font-bold text-sm text-red-600";
+                playSound('wrong');
+            }
+
+            document.getElementById('btnNext').disabled = false;
+        }
+
+        function handleTimeout() {
+            const q = activeQuestions[currentIndex];
+            const container = document.getElementById('optionsContainer');
+            const buttons = container.querySelectorAll('button');
+
+            buttons.forEach(b => b.disabled = true);
+            buttons[q.a].className = "w-full text-right p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-900 font-bold flex justify-between items-center";
+            buttons[q.a].querySelector('i').className = "fas fa-check-circle text-emerald-600";
+
+            document.getElementById('feedbackText').innerText = "انتهى الوقت المحدد للسؤال! ⏰";
+            document.getElementById('feedbackText').className = "font-bold text-sm text-amber-600";
+            playSound('wrong');
+
+            document.getElementById('btnNext').disabled = false;
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if(currentIndex < activeQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('stepQuiz').classList.add('hidden');
+            document.getElementById('stepResult').classList.remove('hidden');
+
+            const totalScore = score + bonusPoints;
+            document.getElementById('finalScore').innerText = totalScore;
+
+            const icon = document.getElementById('resultIcon');
+            const evalText = document.getElementById('resultEvaluation');
+
+            if(totalScore >= 80) {
+                icon.innerText = "🏆";
+                icon.className = "w-20 h-20 mx-auto mb-4 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-4xl shadow-md";
+                evalText.innerText = "ممتاز! أنت حارس حقيقي للذاكرة الوطنية 🇩🇿";
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                playSound('win');
+            } else if(totalScore >= 50) {
+                icon.innerText = "🎖️";
+                icon.className = "w-20 h-20 mx-auto mb-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl shadow-md";
+                evalText.innerText = "جيد جداً! لديك حصيلة تاريخية قيّمة";
+            } else {
+                icon.innerText = "📖";
+                icon.className = "w-20 h-20 mx-auto mb-4 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl shadow-md";
+                evalText.innerText = "واصل القراءة واكتشاف تاريخ وطنك المجيد";
+            }
+        }
+
+        function generateCertificate() {
+            document.getElementById('certName').innerText = currentUser.name;
+            document.getElementById('certOrg').innerText = currentUser.org;
+            document.getElementById('certScore').innerText = (score + bonusPoints) + " نقطة";
+            
+            const certArea = document.getElementById('certificateContainer');
+            certArea.classList.toggle('hidden');
+            if(!certArea.classList.contains('hidden')) {
+                certArea.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function resetQuiz() {
+            document.getElementById('stepResult').classList.add('hidden');
+            document.getElementById('certificateContainer').classList.add('hidden');
+            document.getElementById('stepCategories').classList.remove('hidden');
+        }
+
+        /* Wheel of Fortune Logic */
+        const wheelSlices = ["+5 نقاط", "حظ سعيد", "+10 نقاط", "وسام شرف", "+5 نقاط", "حاول ثانية"];
+        const colors = ["#006233", "#D21034", "#EAB308", "#0284C7", "#16A34A", "#DC2626"];
+        let isSpinning = false;
+
+        function initWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            const ctx = canvas.getContext('2d');
+            const numSlices = wheelSlices.length;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+
+            for(let i = 0; i < numSlices; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(128, 128);
+                ctx.arc(128, 128, 128, i * sliceAngle, (i + 1) * sliceAngle);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(128, 128);
+                ctx.rotate(i * sliceAngle + sliceAngle / 2);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px 'Reem Kufi', sans-serif";
+                ctx.textAlign = "right";
+                ctx.fillText(wheelSlices[i], 110, 5);
+                ctx.restore();
+            }
+        }
+
+        function showWheelModal() {
+            document.getElementById('wheelModal').classList.remove('hidden');
+        }
+
+        function closeWheelModal() {
+            document.getElementById('wheelModal').classList.add('hidden');
+        }
+
+        function spinWheel() {
+            if(isSpinning) return;
+            isSpinning = true;
+            document.getElementById('wheelResult').innerText = "";
+
+            const canvas = document.getElementById('wheelCanvas');
+            const randomDeg = Math.floor(1800 + Math.random() * 360);
+            canvas.style.transform = `rotate(${randomDeg}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                bonusPoints += 5;
+                document.getElementById('wheelResult').innerText = "🎉 مبروك! حصلت على +5 نقاط إضافية في رصيدك!";
+                playSound('correct');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
+```eof
+
+تم إضافة العلامة المائية **`SM/1628`** بالكامل وتضمينها بالشكل التالي:
+1. **خلفية شاشة اللعبة الكلية (Global Watermark):** تظهر علامة مائية كبيرة وشفافة في مركز الشاشة طوال فترة اللعب والتنقل بين مراحل المسابقة.
+2. **شريط العنوان السفلي والعلوي:** تم وضع الرمز المرجعي `SM/1628` في الشريط العلوي وشريط حقوق الصفحة في الأسفل.
+3. **شهادة التكريم:** تمت إضافة العلامة المائية `SM/1628` في خلفية الشهادة بشكل أنيق، بالإضافة إلى إدراج سطر التوثيق "الرمز المرجعي للوثيقة: SM/1628" في أسفل الشهادة لضمان ظهورها عند الطباعة أو التصدير بصيغة PDF.
